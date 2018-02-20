@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:with field="resources" type="ru.relex.intertrust.set.client.views.container.ContainerResources"></ui:with>
+
+    <g:HTMLPanel ui:field="block" styleName="{resources.style.loginBlock}">
+            <g:HTMLPanel ui:field="containerPanel" styleName="main"></g:HTMLPanel>
+    </g:HTMLPanel>
+</ui:UiBinder>

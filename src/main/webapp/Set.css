@@ -1,0 +1,19 @@
+body {
+    background-image: url("images/bg2.jpg");
+    background-size: cover;
+    font-family: "Open Sans";
+}
+
+@font-face {
+    font-family: "Open Sans Light"; /* Гарнитура шрифта */
+    src: url(fonts/OpenSans-Light.ttf);
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Open Sans"; /* Гарнитура шрифта */
+    src: url(fonts/OpenSans-Regular.ttf);
+    font-weight: normal;
+    font-style: normal;
+}

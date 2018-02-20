@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:with field="resources" type="ru.relex.intertrust.set.client.views.result.ResultResources"></ui:with>
+
+    <g:HTMLPanel>
+        <div class="{resources.style.loginBlock_gameStarted}">
+            <div ui:field="gameResults" class="{resources.style.loginBlock_hello}"></div>
+            <div class="{resources.style.gameStarted_item}">
+                <span ui:field="gameTime"></span><span ui:field="resultGameTime"></span>
+            </div>
+            <div class="{resources.style.gameStarted_item}">
+                <span ui:field="setsCollected"></span><span ui:field="resultSets"></span>
+            </div>
+            <div class="{resources.style.gameStarted_players_items}">
+                <g:HTMLPanel ui:field="resultGamePlayers">
+                    <div class="{resources.style.gameStarted_players_item}">
+                        <div ui:field="playerName"></div><div ui:field="gamePoints"></div>
+                    </div>
+                </g:HTMLPanel>
+            </div>
+            <g:Button ui:field="exitGame" styleName="{resources.style.loginBlock_exit}"></g:Button>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

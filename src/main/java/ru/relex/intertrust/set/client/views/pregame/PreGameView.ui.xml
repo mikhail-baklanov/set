@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:with field="resources" type="ru.relex.intertrust.set.client.views.pregame.PreGameResources"></ui:with>
+
+    <g:HTMLPanel ui:field="preGame" styleName="{resources.style.loginBlock_waitingGame}">
+            <div class="{resources.style.loginBlock_hello}">
+                <span ui:field="beforeGame"></span>
+                <span ui:field="preGameTimer"></span>
+            </div>
+            <div class="{resources.style.gameStarted_players_items}">
+                <g:HTMLPanel ui:field="playersContainer">
+                    <div class="{resources.style.gameStarted_players_item}">
+                        <div ui:field="number"></div><div ui:field="namePlayer"></div>
+                    </div>
+                </g:HTMLPanel>
+            </div>
+            <g:Button ui:field="exitGame" styleName="{resources.style.loginBlock_exit}"></g:Button>
+    </g:HTMLPanel>
+</ui:UiBinder>

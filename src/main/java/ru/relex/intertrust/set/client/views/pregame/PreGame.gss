@@ -1,0 +1,70 @@
+@external game-started_players_items game-started_players_item pregame-block_waiting-game
+        pregame-block_hello pregame-block_exit;
+
+.pregame-block_waiting-game {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.pregame-block_hello {
+    width: 100%;
+    text-align: center;
+    font-family: "Open Sans Light";
+    color: #6a6a6a;
+    margin-top: 20px;
+    cursor: default;
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.pregame-block_exit {
+    width: 200px;
+    height: 50px;
+    margin: 10px auto;
+    cursor: pointer;
+    border: 1px solid #cd6060;
+    background-color: transparent;
+    color: #cd6060;
+    font-size: 20px;
+    font-family: "Open Sans Light";
+    transition: .15s;
+    outline: none;
+}
+
+.pregame-block_exit:hover {
+    color: #934c4c;
+    background-color: rgba(205,96,96,0.1);
+}
+.game-started_players_items {
+    display: flex;
+    overflow-y: scroll;
+    flex-direction: column;
+    width: 90%;
+    height: 140px;
+    margin: 10px auto 0 auto;
+    background-color: rgba(255,255,255,0.5);
+}
+
+.game-started_players_items::-webkit-scrollbar
+{
+    width: 8px;
+    background-color: rgba(255,255,255,0.5);
+}
+
+.game-started_players_items::-webkit-scrollbar-thumb
+{
+    background-color: rgba(105,127,148,0.8);
+}
+
+.game-started_players_item {
+    display: flex;
+    width: 100%;
+    height: 30px;
+}
+
+.game-started_players_item div{
+    width: 50%;
+    text-align: center;
+    height: 30px;
+}

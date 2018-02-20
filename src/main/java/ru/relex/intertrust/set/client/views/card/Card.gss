@@ -1,0 +1,49 @@
+@external shape card active not-active visible not-correct;
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 11%;
+    max-width: 160px;
+    height: 28%;
+    opacity: 1;
+    background-color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    margin: 1% 1%;
+    box-shadow: 1px 3px 7px rgba(105,127,148,0.5);
+    transition: border .2s, transform .3s, opacity .3s;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    transform: translateX(1000px);
+}
+
+.card.active {
+    border: 2px solid rgba(72, 134, 234, 0.7);
+}
+
+.card.visible.not-active {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+.card.visible {
+    transform: translateX(0px);
+}
+
+.card.not-correct {
+    border-color: rgba(244, 86, 66, 0.8);;
+}
+
+.card .shape {
+    width: 90%;
+    height: 25%;
+    background-size: 100%;
+    background-position: center;
+    margin: 2px auto;
+}
+
+.card:hover{
+    background-color: rgba(255,255,255,0.8);
+    box-shadow: 1px 3px 7px rgba(105,127,148,1);
+}

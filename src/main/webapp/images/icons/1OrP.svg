@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" height="360" width="235">
+  <defs>
+    <rect class="setcolor setline" id="shape" x="30" y="145" width="175" height="70" rx="35"></rect>
+    <style type="text/css">
+      .setcolor {
+        stroke: #fb564a;
+        fill: transparent;
+      }
+      .setline {
+        stroke-width: 4;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+  <use xlink:href="#shape"></use>
+</svg>

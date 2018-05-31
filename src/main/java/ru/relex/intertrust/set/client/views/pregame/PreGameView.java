@@ -12,17 +12,16 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 import ru.relex.intertrust.set.client.uiHandlers.ExitGameUIHandler;
-import ru.relex.intertrust.set.client.constants.GameLocale;
+import ru.relex.intertrust.set.client.l11n.GameStrings;
 import ru.relex.intertrust.set.client.util.Utils;
-
-import java.util.ArrayList;
-import java.util.List;
+import ru.relex.intertrust.set.shared.Player;
+import ru.relex.intertrust.set.shared.Players;
 
 public class PreGameView extends Composite {
 
     interface PreGameViewUiBinder extends UiBinder<Widget, PreGameView> {
     }
-    private GameLocale gameLocale = GWT.create(GameLocale.class);
+    private GameStrings gameStrings = GWT.create(GameStrings.class);
     private static PreGameViewUiBinder uiBinder = GWT.create(PreGameViewUiBinder.class);
 
     /**
@@ -61,16 +60,16 @@ public class PreGameView extends Composite {
     /**
      * Список игроков, ожидающих начало игры
      */
-    private List<String> players = new ArrayList<>();
+    private Players players = null;
 
     public PreGameView(ExitGameUIHandler exitListener) {
         this.exitListener = exitListener;
         PreGameResources.INSTANCE.style().ensureInjected();
         initWidget(uiBinder.createAndBindUi(this));
-        beforeGame.setInnerHTML(gameLocale.beforeGame());
-        number.setInnerHTML(gameLocale.number());
-        namePlayer.setInnerHTML(gameLocale.playerName());
-        exitGame.setHTML(gameLocale.exitGame());
+        beforeGame.setInnerHTML(gameStrings.beforeGame());
+        number.setInnerHTML(gameStrings.number());
+        namePlayer.setInnerHTML(gameStrings.playerName());
+        exitGame.setHTML(gameStrings.exitGame());
     }
 
     /**
@@ -94,13 +93,14 @@ public class PreGameView extends Composite {
      * Устанавливает список игроков, ожидающих начало игры
      * @param players список игроков
      */
-    public void setPlayers (List<String> players) {
-        if (!this.players.containsAll(players) || !players.containsAll(this.players)) {
+    public void setPlayers (Players players) {
+        if (!players.equals(this.players)) {
             this.players = players;
             playersContainer.clear();
-            for (int i = 0; i < players.size(); i++) {
+            int i = 1;
+            for (Player player: players.getPlayerList()) {
                 HTMLPanel widget = new HTMLPanel("<div class=\"game-started_players_item\">\n<div>" +
-                        (i + 1) + "</div><div>" + players.get(i) + "</div>\n</div>");
+                        (i++) + "</div><div>" + player.getName() + "</div>\n</div>");
                 playersContainer.add(widget);
             }
         }

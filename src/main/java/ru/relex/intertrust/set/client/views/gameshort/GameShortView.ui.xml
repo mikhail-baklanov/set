@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:with field="resources" type="ru.relex.intertrust.set.client.views.gameshort.GameShortResources"/>
+    <ui:with field="strings" type="ru.relex.intertrust.set.client.l11n.GameStrings"/>
+
+    <g:HTMLPanel>
+        <div class="{resources.style.loginBlock_gameStarted}">
+            <div class="{resources.style.loginBlock_hello}"><ui:text from="{strings.gameWasStarted}"/></div>
+            <div class="{resources.style.gameStarted_item}">
+                <ui:text from="{strings.gameTime}"/><span ui:field="gameTime"/>
+            </div>
+            <div class="{resources.style.gameStarted_item}">
+                <ui:text from="{strings.cardsLeft}"/><span ui:field="deskSize"/>
+            </div>
+            <div class="{resources.style.gameStarted_players_items}">
+                <g:HTMLPanel ui:field="players"/>
+            </div>
+            <g:Button ui:field="observe" styleName="{resources.style.observe}" text="{strings.observe}"/>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

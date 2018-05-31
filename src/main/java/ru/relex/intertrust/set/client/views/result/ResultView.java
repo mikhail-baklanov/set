@@ -9,27 +9,27 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.*;
 import ru.relex.intertrust.set.client.uiHandlers.ExitGameUIHandler;
-import ru.relex.intertrust.set.client.constants.GameLocale;
+import ru.relex.intertrust.set.client.l11n.GameStrings;
 import ru.relex.intertrust.set.client.util.Utils;
-import ru.relex.intertrust.set.shared.GameState;
-
-import java.util.List;
+import ru.relex.intertrust.set.shared.GameInfo;
+import ru.relex.intertrust.set.shared.Player;
+import ru.relex.intertrust.set.shared.Players;
 
 public class ResultView extends Composite {
 
     interface ResultViewUiBinder extends UiBinder<Widget, ResultView> {
     }
 
-    private GameLocale gameLocale = GWT.create(GameLocale.class);
+    private GameStrings gameStrings = GWT.create(GameStrings.class);
 
     /**
      * Установка нового состояния игры
-     * @param gameState новое состояние игры
+     * @param gameInfo новое состояние игры
      */
-    public final void setGameState(GameState gameState) {
-        setResultGameTime(gameState.getTime());
-        setResultSets(gameState.getCountSets());
-        setResultGamePlayers(gameState.getPlayers(), gameState.getScore());
+    public final void setGameInfo(GameInfo gameInfo) {
+        setResultGameTime(gameInfo.getTime());
+        setResultSets(gameInfo.getSetsCount());
+        setResultGamePlayers(gameInfo.getPlayers());
     }
 
     private static ResultViewUiBinder uiBinder = GWT.create(ResultViewUiBinder.class);
@@ -106,12 +106,12 @@ public class ResultView extends Composite {
         this.exitListener = exitListener;
         ResultResources.INSTANCE.style().ensureInjected();
         initWidget(uiBinder.createAndBindUi(this));
-        gameResults.setInnerHTML(gameLocale.gameResults());
-        gameTime.setInnerHTML(gameLocale.gameTime());
-        setsCollected.setInnerHTML(gameLocale.setsCollected());
-        playerName.setInnerHTML(gameLocale.playerName());
-        gamePoints.setInnerHTML(gameLocale.gamePoints());
-        exitGame.setHTML(gameLocale.exitGame());
+        gameResults.setInnerHTML(gameStrings.gameResults());
+        gameTime.setInnerHTML(gameStrings.gameTime());
+        setsCollected.setInnerHTML(gameStrings.setsCollected());
+        playerName.setInnerHTML(gameStrings.playerName());
+        gamePoints.setInnerHTML(gameStrings.gamePoints());
+        exitGame.setHTML(gameStrings.exitGame());
     }
 
     /**
@@ -138,15 +138,14 @@ public class ResultView extends Composite {
     /**
      * Устанавливает результаты
      * @param players список игроков
-     * @param score список результатов для каждого из игроков
      */
-    private void setResultGamePlayers(List<String> players, List<Integer> score) {
+    private void setResultGamePlayers(Players players) {
         resultGamePlayers.clear();
-        for (int i = 0; i < players.size(); i++) {
+        for (Player p: players.getPlayerList()) {
 //            FlowPanel playerResultContainer = new FlowPanel();
 //            playerResultContainer.setStyleName(style.gameStarted_players_item());
             HTMLPanel widget = new HTMLPanel("<div class=\"game-started_players_item\">\n<div>" +
-                    players.get(i) + "</div><div>" + score.get(i) + "</div>\n</div>");
+                    p.getName() + "</div><div>" + p.getScore() + "</div>\n</div>");
             resultGamePlayers.add(widget);
         }
     }

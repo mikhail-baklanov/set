@@ -1,26 +1,26 @@
-package ru.relex.intertrust.set.client.constants;
+package ru.relex.intertrust.set.client.l11n;
+
+import com.google.gwt.i18n.client.Constants;
 
 /**
- * Interface to represent the constants contained in resource bundle:
- * 	'D:/JavaWork1Oleg/aGitRep/int-p/Set/src/main/java/ru/relex/intertrust/set/client/constants/src/com/GameLocale.properties'.
+ * Interface to represent the l11n contained in resource bundle:
+ * 	'D:/JavaWork1Oleg/aGitRep/int-p/Set/src/main/java/ru/relex/intertrust/set/client/l11n/src/com/GameStrings.properties'.
  */
-public interface GameLocale extends com.google.gwt.i18n.client.Constants {
+public interface GameStrings extends com.google.gwt.i18n.client.Messages {
   
   /**
    * Translated "Игра уже началась.".
    * 
    * @return translated "Игра уже началась."
    */
-  @DefaultStringValue("Игра уже началась.")
-  @Key("alreadyGame")
-  String alreadyGame();
+  @Key("gameWasStarted")
+  String gameWasStarted();
 
   /**
    * Translated "До начала игры:".
    * 
    * @return translated "До начала игры:"
    */
-  @DefaultStringValue("До начала игры:")
   @Key("beforeGame")
   String beforeGame();
 
@@ -29,16 +29,14 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Карт в колоде"
    */
-  @DefaultStringValue("Карт в колоде")
   @Key("cardsInDeck")
   String cardsInDeck();
 
   /**
    * Translated "Карт в колоде осталось:".
-   * 
+   *
    * @return translated "Карт в колоде осталось:"
    */
-  @DefaultStringValue("Карт в колоде осталось:")
   @Key("cardsLeft")
   String cardsLeft();
 
@@ -47,7 +45,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Продолжить"
    */
-  @DefaultStringValue("Продолжить")
   @Key("continueGame")
   String continueGame();
 
@@ -56,7 +53,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Неверное имя или такой игрок уже существует"
    */
-  @DefaultStringValue("Неверное имя или такой игрок уже существует")
   @Key("errorLogin")
   String errorLogin();
 
@@ -65,7 +61,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Выйти из игры"
    */
-  @DefaultStringValue("Выйти из игры")
   @Key("exitGame")
   String exitGame();
 
@@ -74,7 +69,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Баллы"
    */
-  @DefaultStringValue("Баллы")
   @Key("gamePoints")
   String gamePoints();
 
@@ -83,7 +77,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Результаты."
    */
-  @DefaultStringValue("Результаты.")
   @Key("gameResults")
   String gameResults();
 
@@ -92,7 +85,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "С начала игры прошло:"
    */
-  @DefaultStringValue("С начала игры прошло:")
   @Key("gameTime")
   String gameTime();
 
@@ -101,7 +93,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Номер"
    */
-  @DefaultStringValue("Номер")
   @Key("number")
   String number();
 
@@ -110,7 +101,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Пас"
    */
-  @DefaultStringValue("Пас")
   @Key("pass")
   String pass();
 
@@ -119,7 +109,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Имя игрока"
    */
-  @DefaultStringValue("Имя игрока")
   @Key("playerName")
   String playerName();
 
@@ -128,7 +117,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Игроки"
    */
-  @DefaultStringValue("Игроки")
   @Key("players")
   String players();
 
@@ -137,7 +125,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Сетов собрано"
    */
-  @DefaultStringValue("Сетов собрано")
   @Key("setsCollected")
   String setsCollected();
 
@@ -146,7 +133,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Статистика"
    */
-  @DefaultStringValue("Статистика")
   @Key("statistic")
   String statistic();
 
@@ -155,7 +141,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Продолжить"
    */
-  @DefaultStringValue("Продолжить")
   @Key("submitLogin")
   String submitLogin();
 
@@ -164,7 +149,6 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Игра начнется через:&nbsp;"
    */
-  @DefaultStringValue("Игра начнется через:&nbsp;")
   @Key("timeBlock")
   String timeBlock();
 
@@ -173,11 +157,9 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    * 
    * @return translated "Добро пожаловать!"
    */
-  @DefaultStringValue("Добро пожаловать!")
   @Key("welcome")
   String welcome();
 
-  @DefaultStringValue("Имя")
   @Key("nickname")
   String nickname();
 
@@ -186,7 +168,9 @@ public interface GameLocale extends com.google.gwt.i18n.client.Constants {
    *
    * @return translated "Времени прошло:&nbsp;")
    */
-  @DefaultStringValue("Времени прошло:&nbsp;")
   @Key("timeLabel")
   String timeLabel();
+
+  @Key("observe")
+  String observe();
 }

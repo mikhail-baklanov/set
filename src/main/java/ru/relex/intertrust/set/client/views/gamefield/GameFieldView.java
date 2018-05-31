@@ -12,131 +12,102 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import ru.relex.intertrust.set.client.uiHandlers.GameFieldViewUIHandler;
-import ru.relex.intertrust.set.client.constants.GameLocale;
+import ru.relex.intertrust.set.client.l11n.GameStrings;
 import ru.relex.intertrust.set.client.util.Utils;
-import ru.relex.intertrust.set.client.views.GameStateComposite;
+import ru.relex.intertrust.set.client.views.ApplyGameInfoView;
 import ru.relex.intertrust.set.client.views.card.CardView;
-import ru.relex.intertrust.set.shared.Card;
-import ru.relex.intertrust.set.shared.GameState;
+import ru.relex.intertrust.set.shared.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
- *  View для игрового поля.
+ * View для игрового поля.
  */
-public class GameFieldView extends GameStateComposite{
+public class GameFieldView extends ApplyGameInfoView {
 
-    interface StartViewUiBinder extends UiBinder<Widget, GameFieldView>{ }
-
-    private GameLocale                 gameLocale   =   GWT.create(GameLocale.class);
-    private GameFieldResources         gfr          =   GWT.create(GameFieldResources.class);
-    private static StartViewUiBinder   uiBinder     =   GWT.create(StartViewUiBinder.class);
-
+    private static StartViewUiBinder uiBinder = GWT.create(StartViewUiBinder.class);
     /**
-     *  Контейнер для виджетов карт.
+     * Необходимые для использования стили.
+     */
+    private static GameFieldResources.GameFieldStyles style = GameFieldResources.INSTANCE.style();
+    /**
+     * Контейнер для виджетов карт.
      */
     @UiField
     HTMLPanel cardContainer;
-
     /**
-     *  Контейнер для отображения собранных сетов.
+     * Контейнер для отображения собранных сетов.
      */
     @UiField
     SpanElement countOfSets;
-
     /**
-     *  Контейнер для статистики игроков.
+     * Контейнер для статистики игроков.
      */
     @UiField
     FlowPanel statisticContainer;
-
     /**
-     *  Прошедшее время с начала игры.
+     * Прошедшее время с начала игры.
      */
     @UiField
     SpanElement time;
-
     /**
-     *  Левый блок игрового поля.
+     * Левый блок игрового поля.
      */
     @UiField
     HTMLPanel leftBar;
-
     /**
-     *  Правый блок игрового поля.
+     * Правый блок игрового поля.
      */
     @UiField
     HTMLPanel rightBar;
-
     /**
-     *  Оставшиеся карты.
+     * Оставшиеся карты.
      */
     @UiField
     SpanElement cardLeft;
-
     /**
-     *  Кнопка для скрытия правого бара.
+     * Кнопка для скрытия правого бара.
      */
     @UiField
     SimplePanel slideButton;
-
     /**
-     *  Кнопка для пасса.
+     * Кнопка для пасса.
      */
     @UiField
     Button passButton;
-
     /**
-     *  Кнопка для выхода из игры.
+     * Кнопка для выхода из игры.
      */
     @UiField
     Button exitGame;
-
     /**
-     * Кнопка для смены режима отображения.
-     */
-    @UiField
-    Button changeMode;
-
-    /**
-     *  Контейнеры для статичного текста.
+     * Контейнеры для статичного текста.
      */
     @UiField
     DivElement statistic;
-
     @UiField
     SpanElement players;
-
     @UiField
     SpanElement gamePoints;
-
     @UiField
     SpanElement cardLeftSpan;
-
     @UiField
     SpanElement countOfSetsLabel;
-
     @UiField
     SpanElement timeLabel;
-
+    private GameFieldResources gfr = GWT.create(GameFieldResources.class);
     /**
-     *  Необходимые для использования стили.
+     * Текущее состояние игры.
      */
-    private static GameFieldResources.GameFieldStyles style = GameFieldResources.INSTANCE.style();
-
+    private GameInfo gameInfo = new GameInfo();
     /**
-     *  Текущее состояние игры.
-     */
-    private GameState currentGameState = new GameState();
-
-    /**
-     *  Массив выбранных игроком карт.
+     * Массив выбранных игроком карт.
      */
     private List<CardView> choosedCards = new ArrayList<>();
-
     /**
-     *  Обработчик GameFieldView.
+     * Обработчик GameFieldView.
      */
     private GameFieldViewUIHandler uiHandler;
 
@@ -148,132 +119,104 @@ public class GameFieldView extends GameStateComposite{
         initViewWidgets();
 
         slideButton.sinkEvents(Event.ONCLICK);
-        slideButton.addHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                if (!leftBar.getElement().hasClassName("active")) {
-                    leftBar.getElement().addClassName("active");
-                    rightBar.getElement().addClassName("active");
-                } else {
-                    leftBar.getElement().removeClassName("active");
-                    rightBar.getElement().removeClassName("active");
-                }
+        slideButton.addHandler(event -> {
+            if (!leftBar.getElement().hasClassName("active")) {
+                leftBar.getElement().addClassName("active");
+                rightBar.getElement().addClassName("active");
+            } else {
+                leftBar.getElement().removeClassName("active");
+                rightBar.getElement().removeClassName("active");
             }
         }, ClickEvent.getType());
     }
 
     @UiHandler("exitGame")
     public void onClickExit(ClickEvent e) {
-        if (uiHandler.canChange(currentGameState)) {   //Одна кнопка используется и для переключения режимов
-            uiHandler.changeMode();                    //Необходимо сделать отдельную кнопку под этот блок кода
-            return;
-        }
         uiHandler.exit();
-    }
-
-    @UiHandler("changeMode")
-    public void onClickChangeMode(ClickEvent e) {
-        if (uiHandler.canChange(currentGameState))
-            uiHandler.changeMode();
     }
 
     @UiHandler("passButton")
     public void doClick(ClickEvent e) {
-        if (uiHandler.canChange(currentGameState))
-            return;
-        uiHandler.pass(currentGameState.getDeck().size());
+        uiHandler.pass(gameInfo.getDeckSize());
     }
 
     /**
-     *  Метод, который заполняет View статичным текстом.
+     * Метод, который заполняет View статичным текстом.
      */
     private void initViewWidgets() {
-        this.statistic.setInnerHTML(gameLocale.statistic());
-        this.exitGame.setHTML(gameLocale.exitGame());
-        this.changeMode.setHTML(gameLocale.exitGame());//todo: Изменить константу
-        this.players.setInnerHTML(gameLocale.players());
-        this.gamePoints.setInnerHTML(gameLocale.gamePoints());
-        this.passButton.setHTML(gameLocale.pass());
-        this.cardLeftSpan.setInnerHTML(gameLocale.cardsInDeck() + ": ");
-        this.countOfSetsLabel.setInnerHTML(gameLocale.setsCollected());
-        this.timeLabel.setInnerHTML(gameLocale.timeLabel());
+        GameStrings gameStrings = GWT.create(GameStrings.class);
+        this.statistic.setInnerHTML(gameStrings.statistic());
+        this.exitGame.setHTML(gameStrings.exitGame());
+        this.players.setInnerHTML(gameStrings.players());
+        this.gamePoints.setInnerHTML(gameStrings.gamePoints());
+        this.passButton.setHTML(gameStrings.pass());
+        this.cardLeftSpan.setInnerHTML(gameStrings.cardsInDeck());
+        this.countOfSetsLabel.setInnerHTML(gameStrings.setsCollected());
+        this.timeLabel.setInnerHTML(gameStrings.timeLabel());
     }
 
     /**
-     *  Актуализация прошедшего с начала игры времени.
+     * Актуализация прошедшего с начала игры времени.
      *
-     *  @param time время
+     * @param time время
      */
-    private void setTime(String time){
+    private void setTime(String time) {
         this.time.setInnerHTML(time);
     }
 
     /**
-     *  Актуализация количества оставшихся карт.
+     * Актуализация количества оставшихся карт.
      *
-     *  @param cardLeftCount количество оставшихся карт
+     * @param cardLeftCount количество оставшихся карт
      */
-    private void setCardLeft(int cardLeftCount){
+    private void setCardLeft(int cardLeftCount) {
         if (cardLeft.getInnerHTML().equals("") || Integer.parseInt(cardLeft.getInnerHTML()) != cardLeftCount)
-        this.cardLeft.setInnerHTML("" + cardLeftCount);
+            this.cardLeft.setInnerHTML("" + cardLeftCount);
     }
 
     /**
-     *  Актуализация статистики игроков.
-     *
-     *  @param nickNames имена игроков
-     *  @param scores баллы игроков
+     * Актуализация статистики игроков.
      */
-    private void setStatistics(List<String> nickNames, List<Integer> scores){
-        if(statisticContainer.getWidgetCount() == 0) {
-            for (int i = 0; i < nickNames.size(); i++) {
-                HTML player = new HTML("<span>" + nickNames.get(i) + "</span><span>" + scores.get(i) + "</span>");
-                player.setStyleName(style.statisticItem());
-                this.statisticContainer.add(player);
+    private void setStatistics(Players players) {
+        if (players.equals(gameInfo.getPlayers()))
+            return;
+        statisticContainer.clear();
+        for (Player p : players.getPlayerList()) {
+            HTML player = new HTML("<span>" + p.getName() + "</span><span>" + p.getScore() + "</span>");
+            player.setStyleName(style.statisticItem());
+            if (p.isPassed())
+                player.addStyleName(style.passed());
+            else
+                player.removeStyleName(style.passed());
+            statisticContainer.add(player);
 
-                HTML separator = new HTML("");
-                separator.setStyleName(style.separator());
-                this.statisticContainer.add(separator);
-            }
-        } else {
-            List<Integer> oldScores = currentGameState.getScore();
-            List<HTML> players = new ArrayList<>();
-            for (int i = 0; i < statisticContainer.getWidgetCount(); i += 2)
-                players.add((HTML) statisticContainer.getWidget(i));
-
-            for(int i = 0; i < players.size(); i++) {
-                if (oldScores.get(i) != scores.get(i)) {
-                    players.get(i).setHTML("<span>" + nickNames.get(i) + "</span><span>" + scores.get(i) + "</span>");
-                }
-                if (currentGameState.getNotAbleToPlay() != null && currentGameState.getNotAbleToPlay().contains(nickNames.get(i)))
-                    players.get(i).addStyleName(style.passed());
-                else
-                    players.get(i).removeStyleName(style.passed());
-                }
-            }
+            HTML separator = new HTML("");
+            separator.setStyleName(style.separator());
+            statisticContainer.add(separator);
         }
-
-    /**
-     *  Актуализация количества найденных сетов.
-     *
-     *  @param findSets количество найденных сетов
-     */
-    private void setHistory(int findSets){
-            if (!countOfSets.getInnerHTML().equals("" + findSets))
-                countOfSets.setInnerHTML("" + findSets);
     }
 
     /**
-     *  Актуализация карт на столе.
+     * Актуализация количества найденных сетов.
      *
-     *  @param newCardsOnDesk актуальные карты на столе
+     * @param findSets количество найденных сетов
      */
-    private void setCards(List<Card> newCardsOnDesk){
+    private void setHistory(int findSets) {
+        if (!countOfSets.getInnerHTML().equals("" + findSets))
+            countOfSets.setInnerHTML("" + findSets);
+    }
+
+    /**
+     * Актуализация карт на столе.
+     *
+     * @param newCardsOnDesk актуальные карты на столе
+     */
+    private void setCards(Collection<Card> newCardsOnDesk) {
         boolean isActual;
         for (int i = 0; i < cardContainer.getWidgetCount(); i++) {
             isActual = false;
             CardView cardOnDesk = (CardView) cardContainer.getWidget(i);
-            for (Card newCard: newCardsOnDesk) {
+            for (Card newCard : newCardsOnDesk) {
                 if (cardOnDesk.getCard().equals(newCard)) {
                     isActual = true;
                     break;
@@ -283,7 +226,7 @@ public class GameFieldView extends GameStateComposite{
                 removeFromDesk(cardOnDesk);
         }
 
-        for (Card newCard: newCardsOnDesk) {
+        for (Card newCard : newCardsOnDesk) {
             isActual = false;
             for (int i = 0; i < cardContainer.getWidgetCount(); i++) {
                 CardView cardOnDesk = (CardView) cardContainer.getWidget(i);
@@ -299,9 +242,9 @@ public class GameFieldView extends GameStateComposite{
     }
 
     /**
-     *  Удаление карты со стола.
+     * Удаление карты со стола.
      *
-     *  @param cardOnDesk карта
+     * @param cardOnDesk карта
      */
     private void removeFromDesk(CardView cardOnDesk) {
         Timer timer = new Timer() {
@@ -316,9 +259,9 @@ public class GameFieldView extends GameStateComposite{
     }
 
     /**
-     *  Добавление карты на стол.
+     * Добавление карты на стол.
      *
-     *  @param card карта
+     * @param card карта
      */
     private void addOnDesk(CardView card) {
         ClickHandler click = new ClickHandler() {
@@ -340,49 +283,45 @@ public class GameFieldView extends GameStateComposite{
     }
 
     /**
-     *  Актуализация всей информации.
+     * Актуализация всей информации.
      *
-     *  @param gameState серверное состояние игры
+     * @param gameInfo серверное состояние игры
      */
     @Override
-    public void setGameState(GameState gameState) {
-        if (uiHandler.canChange(gameState))
-        {
-            changeMode.removeStyleName(gfr.style().disable());
-            changeMode.setStyleName(gfr.style().change_mode(), true);
-            exitGame.setStyleName(gfr.style().disable(), true);
+    public void setGameInfo(GameInfo gameInfo) {
+        if (gameInfo.isObserveMode()) {
             passButton.setStyleName(gfr.style().disable(), true);
         } else {
             passButton.removeStyleName(gfr.style().disable());
-            exitGame.removeStyleName(gfr.style().disable());
-            exitGame.setStyleName(gfr.style().gameField_exit(), true);
-            changeMode.setStyleName(gfr.style().disable(), true);
         }
-        setCardLeft(gameState.getDeck().size());
-        setCards(gameState.getCardsOnDesk());
-        setHistory(gameState.getCountSets());
-        setStatistics(gameState.getPlayers(), gameState.getScore());
-        setTime(Utils.formatTime(gameState.getTime()));
-        currentGameState = gameState;
+        setCardLeft(gameInfo.getDeckSize());
+        setCards(gameInfo.getCardsOnDesk());
+        setHistory(gameInfo.getSetsCount());
+        setStatistics(gameInfo.getPlayers());
+        setTime(Utils.formatTime(gameInfo.getTime()));
+
+        // обновляем поле после перерисовки, поскольку перерисовываются только значения,
+        // отличающиеся от старых
+        this.gameInfo = gameInfo;
     }
 
     /**
-     *  Метод, который добавляет карту в массив выбранных карт.
-     *  При выборе трёх карт вызывает обработчик для проверки сета и очищает массив.
+     * Метод, который добавляет карту в массив выбранных карт.
+     * При выборе трёх карт вызывает обработчик для проверки сета и очищает массив.
      *
-     *  @param widget карта
+     * @param widget карта
      */
-    private void chooseCard (Object widget) {
-        if (uiHandler.canChange(currentGameState))   //выделение карт не работает в режиме просмотра
+    private void chooseCard(Object widget) {
+        if (gameInfo.isObserveMode())   //выделение карт не работает в режиме наблюдения
             return;
         CardView card = (CardView) widget;
         if (!choosedCards.contains(card)) {
             card.getElement().addClassName("active");
             choosedCards.add(card);
             if (choosedCards.size() == 3) {
-                Card[] cards = new Card[] {choosedCards.get(0).getCard(), choosedCards.get(1).getCard(), choosedCards.get(2).getCard()};
+                Card[] cards = new Card[]{choosedCards.get(0).getCard(), choosedCards.get(1).getCard(), choosedCards.get(2).getCard()};
                 uiHandler.checkSet(cards);
-                for (CardView item: choosedCards)
+                for (CardView item : choosedCards)
                     item.getElement().removeClassName("active");
                 choosedCards.clear();
             }
@@ -393,15 +332,15 @@ public class GameFieldView extends GameStateComposite{
     }
 
     /**
-     *  Подсвечивание карт.
+     * Подсвечивание карт.
      *
-     *  @param cards карты, которые необходимо подсветить
+     * @param cards карты, которые необходимо подсветить
      */
     public void showNotCorrectCards(Card[] cards) {
         List<CardView> notCorrectCards = new ArrayList<>();
         for (int i = 0; i < cardContainer.getWidgetCount(); i++)
-            for (Card card: cards) {
-            CardView cardFromDesk = (CardView) cardContainer.getWidget(i);
+            for (Card card : cards) {
+                CardView cardFromDesk = (CardView) cardContainer.getWidget(i);
                 if (card.equals(cardFromDesk.getCard()))
                     notCorrectCards.add(cardFromDesk);
             }
@@ -409,22 +348,25 @@ public class GameFieldView extends GameStateComposite{
         Timer timer = new Timer() {
             @Override
             public void run() {
-                for (CardView card: notCorrectCards)
+                for (CardView card : notCorrectCards)
                     card.getElement().removeClassName("not-correct");
             }
         };
 
-        for (CardView card: notCorrectCards)
+        for (CardView card : notCorrectCards)
             card.getElement().addClassName("not-correct");
         timer.schedule(500);
     }
 
     /**
-     *  Метод, очищающий игровое поле.
+     * Метод, очищающий игровое поле.
      */
     public void clearGameField() {
         cardContainer.clear();
         statisticContainer.clear();
-        currentGameState = new GameState();
-}
+        gameInfo = new GameInfo();
+    }
+
+    interface StartViewUiBinder extends UiBinder<Widget, GameFieldView> {
+    }
 }

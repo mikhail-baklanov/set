@@ -1,5 +1,5 @@
 @external login-block_game-started login-block_hello game-started_item game-started_players_items
-        game-started_players_item change_mode;
+        game-started_players_item change_mode game-started_observe;
 
 .login-block_game-started {
     display: flex;
@@ -52,20 +52,22 @@
     height: 30px;
 }
 
-.change_mode {
-    width: 70%;
-    margin: 15px auto;
+.game-started_observe {
+    width: 200px;
+    height: 50px;
+    margin: 10px auto;
     cursor: pointer;
-    border: none;
-    padding: 3px 0;
-    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid #cd6060;
+    background-color: transparent;
     color: #cd6060;
-    font-size: 18px;
+    font-size: 20px;
     font-family: "Open Sans";
+    font-weight: 300;
     transition: .15s;
     outline: none;
 }
 
-.change_mode:hover {
-    background-color: rgba(255, 255, 255, 0.8);
+.game-started_observe:hover {
+    color: #934c4c;
+    background-color: rgba(205,96,96,0.1);
 }

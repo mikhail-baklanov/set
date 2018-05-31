@@ -18,9 +18,6 @@ public interface GameFieldResources extends ClientBundle {
         @ClassName("disable")
         String disable();
 
-        @ClassName("change_mode")
-        String change_mode();
-
         @ClassName("right-bar")
         String rightBar();
 

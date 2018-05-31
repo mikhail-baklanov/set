@@ -26,24 +26,23 @@
                 <div class="{resources.style.history}">
                     <div ui:field="statistic" class="{resources.style.historyItem} {resources.style.header}"></div>
                     <div class="{resources.style.historyItem}">
-                        <span ui:field="timeLabel"></span>
+                        <span ui:field="timeLabel"></span>&nbsp;
                         <span ui:field="time"></span>
                     </div>
                     <div class="{resources.style.separator}"></div>
                     <div class="{resources.style.historyItem}">
-                        <span ui:field="countOfSetsLabel"></span>
+                        <span ui:field="countOfSetsLabel"></span>&nbsp;
                         <span ui:field="countOfSets"></span>
                     </div>
                     <div class="{resources.style.separator}"></div>
                     <div class="{resources.style.historyItem}">
-                        <span ui:field="cardLeftSpan"></span>
+                        <span ui:field="cardLeftSpan"></span>&nbsp;
                         <span ui:field="cardLeft"></span>
                     </div>
                     <div class="{resources.style.separator}"></div>
                 </div>
-                <g:Button ui:field="passButton" styleName="{resources.style.pass}"></g:Button>
-                <g:Button ui:field="exitGame" styleName="{resources.style.gameField_exit}"></g:Button>
-                <g:Button ui:field="changeMode" styleName="{resources.style.change_mode}"></g:Button>
+                <g:Button ui:field="passButton" styleName="{resources.style.pass}"/>
+                <g:Button ui:field="exitGame" styleName="{resources.style.gameField_exit}"/>
             </g:HTMLPanel>
         </main>
     </g:HTMLPanel>

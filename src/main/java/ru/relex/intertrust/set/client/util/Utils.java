@@ -1,5 +1,7 @@
 package ru.relex.intertrust.set.client.util;
 
+import com.google.gwt.user.client.Window;
+
 /**
  * Класс для вспомогательных методов.
  */
@@ -8,24 +10,14 @@ public class Utils {
     private Utils() {}
 
     /**
-     * Метод форматирует вывод таймера.
-     *
-     * @param timeMs время в миллисекундах
+     * Форматирование значения времени из миллисекунд в вид ММ:СС.
+     * @param timeMs время в миллисекундах, может быть отрицательным
      */
     public static String formatTime(long timeMs) {
         timeMs = Math.abs(timeMs)/1000;
-        return (timeMs/60 < 10 ? "0" + timeMs/60 : timeMs/60) + ":" + (timeMs%60 < 10 ? "0" + timeMs%60 : timeMs%60);
-    }
-    public static void changeURL(String room){
-        StringBuilder url= new StringBuilder(com.google.gwt.user.client.Window.Location.getHref());
-        int i=0;
-        for(i=0;i<url.length();i++)
-            if(url.charAt(i)=='=') {
-            i++;
-            break;
-        }
-
-        com.google.gwt.user.client.Window.Location.assign(url.substring(0,i)+room);
+        long m = timeMs/60;
+        long s = timeMs%60;
+        return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
     }
 
     /**

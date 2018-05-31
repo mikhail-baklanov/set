@@ -4,58 +4,71 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
-import ru.relex.intertrust.set.client.uiHandlers.ChangeModeUIHandler;
+import ru.relex.intertrust.set.client.service.SetService;
+import ru.relex.intertrust.set.client.service.SetServiceAsync;
+import ru.relex.intertrust.set.client.uiHandlers.ObserveUIHandler;
 import ru.relex.intertrust.set.client.uiHandlers.ExitGameUIHandler;
 import ru.relex.intertrust.set.client.uiHandlers.GameFieldViewUIHandler;
 import ru.relex.intertrust.set.client.uiHandlers.LoginViewUIHandler;
-import ru.relex.intertrust.set.client.service.SetService;
-import ru.relex.intertrust.set.client.service.SetServiceAsync;
-import ru.relex.intertrust.set.client.views.GameStateComposite;
-import ru.relex.intertrust.set.client.views.anothergame.AnotherGameView;
+import ru.relex.intertrust.set.client.views.ApplyGameInfoView;
+import ru.relex.intertrust.set.client.views.gameshort.GameShortView;
 import ru.relex.intertrust.set.client.views.container.ContainerView;
 import ru.relex.intertrust.set.client.views.gamefield.GameFieldView;
 import ru.relex.intertrust.set.client.views.login.LoginView;
 import ru.relex.intertrust.set.client.views.pregame.PreGameView;
 import ru.relex.intertrust.set.client.views.result.ResultView;
 import ru.relex.intertrust.set.shared.Card;
-import ru.relex.intertrust.set.shared.GameState;
+import ru.relex.intertrust.set.shared.GameInfo;
 
-import static ru.relex.intertrust.set.client.util.Utils.changeURL;
 import static ru.relex.intertrust.set.client.util.Utils.consoleLog;
 
-public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, GameFieldViewUIHandler, ChangeModeUIHandler {
+public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, GameFieldViewUIHandler, ObserveUIHandler {
 
     /**
      * Период опроса сервера для получения значений таймера
      */
-    private static final int    REQUEST_PERIOD      =   1000;
-
+    private static final int REQUEST_PERIOD = 1000;
+    /**
+     * Создание экземпляра класса взаимодействия с сервисом
+     */
+    private static SetServiceAsync serviceAsync = GWT.create(SetService.class);
     private final ContainerView containerView;
-    private boolean             isAnotherGameView   =   true;
-    private GameStateComposite  anotherGameView     =   new AnotherGameView(this);
-
-    private String              playerName;
-    private LoginView           loginView;
-    private GameFieldView       gameFieldView;
-    private ResultView          resultView;
-    private PreGameView         preGameView;
-
-
+    private GameShortView gameShortView;
+    private ApplyGameInfoView anotherGameView;
+    private LoginView loginView;
+    private GameFieldView gameFieldView;
+    private ResultView resultView;
+    private PreGameView preGameView;
     /**
      * Текущий экран
      */
     private Widget currentView;
-
     /**
      * Аргумент в URL, устанавливающий номер игры.
      */
     private String gameRoom = com.google.gwt.user.client.Window.Location.getParameter("gameRoom");
 
+    SetPresenter(ContainerView containerView) {
+        this.containerView = containerView;
 
-    /**
-     * 	Создание экземпляра класса взаимодействия с сервисом
-     */
-    private static SetServiceAsync serviceAsync = GWT.create(SetService.class);
+        loginView = new LoginView(this);
+        gameFieldView = new GameFieldView(this);
+        resultView = new ResultView(this);
+        preGameView = new PreGameView(this);
+        gameShortView = new GameShortView(this);
+
+        anotherGameView = gameShortView;
+
+        requestServer();
+
+        Timer timer = new Timer() {
+            @Override
+            public void run() {
+                requestServer();
+            }
+        };
+        timer.scheduleRepeating(REQUEST_PERIOD);
+    }
 
     @Override
     public void exit() {
@@ -67,7 +80,6 @@ public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, Game
 
             @Override
             public void onSuccess(Void aVoid) {
-                playerName = null;
                 requestServer();
 
                 if (currentView == gameFieldView)
@@ -76,38 +88,19 @@ public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, Game
         });
     }
 
-    SetPresenter(ContainerView containerView) {
-        this.containerView = containerView;
-
-        loginView = new LoginView(this);
-        gameFieldView = new GameFieldView(this);
-        resultView = new ResultView(this);
-        preGameView = new PreGameView(this);
-
-        requestServer();
-
-        Timer timer = new Timer() {
-           @Override
-           public void run() {
-               requestServer();
-           }
-       };
-        timer.scheduleRepeating(REQUEST_PERIOD);
-    }
-
     /**
      * Запрос состояния игры с сервера
      */
-    private void requestServer () {
-        serviceAsync.getGameState(gameRoom, new AsyncCallback<GameState>() {
+    private void requestServer() {
+        serviceAsync.getGameInfo(gameRoom, new AsyncCallback<GameInfo>() {
             @Override
             public void onFailure(Throwable throwable) {
                 consoleLog(throwable.getMessage());
             }
 
             @Override
-            public void onSuccess(GameState gameState) {
-                processGameState(gameState);
+            public void onSuccess(GameInfo gameInfo) {
+                processGameInfo(gameInfo);
             }
         });
     }
@@ -118,39 +111,39 @@ public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, Game
      * Если игроков нет, то отображается loginView.
      * Если игроки есть, то список игроков и время до начала игры.
      *
-     * @param gameState информация о состоянии игры
+     * @param gameInfo информация о состоянии игры
      */
-    private void processGameState(GameState gameState) {
-        long gameStateTime = gameState.getTime();
+    private void processGameInfo(GameInfo gameInfo) {
+        long gameTime = gameInfo.getTime();
         Widget newView;
-        if (gameState.isStart()) {
-            if (gameStateTime >= 0) {
-                if (hasCurrentPlayer(gameState)) {
-                    gameFieldView.setGameState(gameState);
-                    newView = gameFieldView;
-                    if (gameState.getDeck().size() == 0 && !gameState.isStart()) {
-                        resultView.setGameState(gameState);
-                        newView = resultView;
-                    }
+        if (gameInfo.isStarted()) {
+            if (gameInfo.isCurrentUserInGame()) {
+                if (gameInfo.getDeckSize() == 0 && !gameInfo.isStarted()) {
+                    resultView.setGameInfo(gameInfo);
+                    newView = resultView;
                 } else {
-                    anotherGameView.setGameState(gameState);
+                    gameFieldView.setGameInfo(gameInfo);
+                    newView = gameFieldView;
+                }
+            } else {
+                if (gameInfo.isObserveMode()) {
+                    gameFieldView.setGameInfo(gameInfo);
+                    newView = gameFieldView;
+                } else {
+                    anotherGameView.setGameInfo(gameInfo);
                     newView = anotherGameView;
                 }
             }
-            else {
-                newView = loginView;
-            }
         } else {
-            if (hasCurrentPlayer(gameState)) {
-                    preGameView.setPreGameTimer(gameStateTime);
-                    preGameView.setPlayers(gameState.getPlayers());
-                    newView = preGameView;
-            }
-            else {
-                if (gameStateTime < 0 && gameState.getActivePlayers() != 0)
-                    loginView.setLoginTimer(gameStateTime);
-                else
-                    loginView.removeLoginTimer();
+            if (gameInfo.isPrepared() && gameInfo.isCurrentUserInGame()) {
+                preGameView.setPreGameTimer(gameTime);
+                preGameView.setPlayers(gameInfo.getPlayers());
+                newView = preGameView;
+//            } else if (gameInfo.getDeckSize() == 0) {
+//                resultView.setGameInfo(gameInfo);
+//                newView = resultView;
+            } else {
+                loginView.setLoginTimer(gameTime);
                 newView = loginView;
             }
         }
@@ -160,44 +153,20 @@ public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, Game
         }
     }
 
-    /**
-     * Проверяется можно ли использовать данное имя игроку.
-     *
-     * @param gameState информация о состоянии игры
-     * @return true,если можно использовать имя
-     *         false,если имя null или уже есть на сервере
-     */
-    private boolean hasCurrentPlayer(GameState gameState) {
-        return playerName != null && gameState.hasPlayer(playerName);
-    }
-
     @Override
     public void login(String name) {
-        serviceAsync.login(name, gameRoom, new AsyncCallback<String>() {
+        serviceAsync.login(name, gameRoom, new AsyncCallback<Boolean>() {
             @Override
             public void onFailure(Throwable throwable) {
                 consoleLog(throwable.getMessage());
             }
 
             @Override
-            public void onSuccess(String result) {
-                if(result.equals("no"))
+            public void onSuccess(Boolean result) {
+                if (result) {
+                    requestServer();
+                } else {
                     loginView.showLoginError();
-                else if(result.equals("ok")) {
-                    playerName = name;
-                    currentView = preGameView;
-                    containerView.setView(currentView);
-                    requestServer();
-                }
-                else{
-                    //если игрок уже логинился, то его перекидывает в комнату, в которой он логинился
-                    //TODO возвращать игрока в то место, откуда он вышел
-                    gameRoom=result;
-                    playerName = name;
-                    changeURL(result);
-                    currentView = preGameView;
-                    containerView.setView(currentView);
-                    requestServer();
                 }
             }
         });
@@ -229,22 +198,25 @@ public class SetPresenter implements ExitGameUIHandler, LoginViewUIHandler, Game
             }
 
             @Override
-            public void onSuccess(Void aVoid) { requestServer(); }
+            public void onSuccess(Void aVoid) {
+                requestServer();
+            }
         });
     }
 
     @Override
-    public void changeMode() {
-        if (isAnotherGameView){
-            anotherGameView = new GameFieldView(this);
-        } else
-            anotherGameView = new AnotherGameView(this);
-        isAnotherGameView = !isAnotherGameView;
+    public void observe() {
+        serviceAsync.observe(gameRoom, new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                consoleLog(throwable.getMessage());
+            }
+
+            @Override
+            public void onSuccess(Void aVoid) {
+                requestServer();
+            }
+        });
     }
 
-    @Override
-    public boolean canChange(GameState gameState) {
-        //Если текущего игрока нет на сервере, то можно менять режимы отображения
-        return !hasCurrentPlayer(gameState);
-    }
 }

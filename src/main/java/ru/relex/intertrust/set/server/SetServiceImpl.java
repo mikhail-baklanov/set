@@ -3,43 +3,25 @@ package ru.relex.intertrust.set.server;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import ru.relex.intertrust.set.client.service.SetService;
 import ru.relex.intertrust.set.shared.Card;
-import ru.relex.intertrust.set.shared.GameState;
+import ru.relex.intertrust.set.shared.GameInfo;
 
 import javax.servlet.ServletException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
-import static ru.relex.intertrust.set.shared.GameState.INACTIVITY_TIME;
-import static ru.relex.intertrust.set.shared.GameState.getPlayersRoom;
+import static ru.relex.intertrust.set.server.GameStateConstants.TICK_MS;
 
 /**
  * Класс, содержащий серверную логику игры Set.
  */
 public class SetServiceImpl extends RemoteServiceServlet implements SetService {
 
-    private TimerTask t = new StartTimer();
+    // Ключ для хранения состояний игр в Application Context сервлета.
+    // Значением является Map<String, GameState>, где String - имя игры ("комнаты"), GameState - состояние игры
+    private static final String APP_CONTEXT_GAMES = "games";
+    private static final String SESSION_CONTEXT_GAMES_CONNECTIONS = "connections";
+
+    private TimerTask timerTask = new Ticker();
     private Timer timer = new Timer();
-    private static final String GAME_STATE = "gameState";
-    private static final String USER_NAME = "userName";
-    private static final int INITIAL_NUMBER_OF_CARDS = 12;
-    public static final long PERIOD_MS = 1000;
-
-
-    @Override
-    public GameState getGameState(String gameRoom) {
-        HashMap<String, GameState> map = (HashMap<String, GameState>) getServletContext().getAttribute(GAME_STATE);
-        if (!map.containsKey(gameRoom))
-            map.put(gameRoom, new GameState());
-        GameState gameState = map.get(gameRoom);
-            return gameState;
-    }
-
-    public void newGameState(String gameRoom) {
-        HashMap<String, GameState> map = (HashMap<String, GameState>) getServletContext().getAttribute(GAME_STATE);
-            map.put(gameRoom, new GameState());
-    }
 
     /**
      * Первоначальная инициализация.
@@ -51,130 +33,168 @@ public class SetServiceImpl extends RemoteServiceServlet implements SetService {
     public void init() throws ServletException {
         super.init();
         initGame();
-        timer.schedule(t, 0, PERIOD_MS);
+        timer.schedule(timerTask, 0, TICK_MS);
+    }
+
+    @Override
+    public void destroy() {
+        timer.cancel();
+        super.destroy();
     }
 
     /**
      * Инициализация игры.
      */
-    public void initGame() {
-        getServletContext().setAttribute(GAME_STATE, new HashMap<String, GameState>());
+    private void initGame() {
+        getServletContext().setAttribute(APP_CONTEXT_GAMES,
+                Collections.synchronizedMap(new HashMap</*gameRoom*/String, GameState>()));
+    }
+
+    private GameState getGameState(String gameRoom) {
+        Map<String, GameState> map = (Map<String, GameState>) getServletContext().getAttribute(APP_CONTEXT_GAMES);
+        if (!map.containsKey(gameRoom))
+            map.put(gameRoom, new GameState());
+        return map.get(gameRoom);
     }
 
     @Override
-    public String login(String name, String id) {
-        //если сессия уже есть, то возвращаем клиенту номер комнаты, в которую мы изначально заходили
-        if(getThreadLocalRequest().getSession().getAttribute(USER_NAME)!=null){
-            name=(String)getThreadLocalRequest().getSession().getAttribute(USER_NAME);
-            GameState gameState = getGameState(getPlayersRoom(name));
-            synchronized (gameState) {
-                //if (!gameState.hasPlayer(name) && !gameState.isStart())
-                //gameState.createNewPlayer(name);
-                return getPlayersRoom(name);
-            }
-        }
-        if (name.trim().isEmpty())
-            return "no";
-        GameState gameState = getGameState(id);
+    public GameInfo getGameInfo(String gameRoom) {
+        GameState gameState = getGameState(gameRoom);
+        GameConnection gc = null;
 
-        boolean success;
+        Map<GameState, GameConnection> connections = (Map<GameState, GameConnection>) getThreadLocalRequest().getSession().getAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS);
+        if (connections != null)
+            gc = connections.get(gameState);
+
+        if (gc == null) {
+            return getGameState(gameRoom).getGameInfo("", false);
+        } else {
+            String userName = gameState.getGameId().equals(gc.getGameId()) ? gc.getUserName() : "";
+            return getGameState(gameRoom).getGameInfo(userName, gameState.getGameId().equals(gc.getObservedGameId()));
+        }
+    }
+
+    @Override
+    public boolean login(String name, String gameRoom) {
+        GameState gameState = getGameState(gameRoom);
         synchronized (gameState) {
-            success = !gameState.hasPlayer(name) && !gameState.isStart() &&
-                    getThreadLocalRequest().getSession().getAttribute(USER_NAME) == null;
-            if (success) {
-                gameState.createNewPlayer(name);
-                getThreadLocalRequest().getSession().setAttribute(USER_NAME, name);
-                gameState.addRoom(id,name);
-                return "ok";
+
+            Map<GameState, GameConnection> connections = (Map<GameState, GameConnection>) getThreadLocalRequest().getSession().getAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS);
+            if (connections == null) {
+                connections = new HashMap<>();
+                getThreadLocalRequest().getSession().setAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS, connections);
             }
-            return "no";
-        }
-    }
 
-    /**
-     * Метод, вызывающий инициализацию игрового процесса.
-     */
-    public void startGame(String id) {
-        GameState gameState = getGameState(id);
-        gameState.startGame(INITIAL_NUMBER_OF_CARDS);
+            GameConnection gameConnection = connections.get(gameState);
+            if (!gameState.isStoped() &&
+                    gameConnection != null &&
+                    gameState.getGameId().equals(gameConnection.getGameId()) &&
+                    gameConnection.getUserName().equals(name))
+                return true;
 
-    }
-
-    @Override
-    public void exit(String id) {
-        GameState gameState = getGameState(id);
-        synchronized (gameState) {
-            gameState.removePlayer((String) getThreadLocalRequest().getSession().getAttribute(USER_NAME));
-            getThreadLocalRequest().getSession().removeAttribute(USER_NAME);
-            if (gameState.getActivePlayers() == 0) {
-                //reloadTimer();
-                newGameState(id);
+            boolean result = gameState.loginPlayer(name);
+            if (result) {
+                gameConnection = new GameConnection(gameState, name);
+                connections.put(gameState, gameConnection);
             }
+            return result;
+        }
+    }
+
+    private GameConnection getUserGame(String gameRoom) {
+        Map<GameState, GameConnection> connections = (Map<GameState, GameConnection>) getThreadLocalRequest().getSession().getAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS);
+        if (connections == null)
+            return null;
+        GameState gameState = getGameState(gameRoom);
+
+        GameConnection gameConnection = connections.get(gameState);
+        if (gameConnection == null)
+            return null;
+        if (!gameState.getGameId().equals(gameConnection.getGameId()))
+            return null;
+        return gameConnection;
+    }
+
+    @Override
+    public void pass(int cardsInDeck, String gameRoom) {
+        GameConnection gc = getUserGame(gameRoom);
+        if (gc == null)
+            return;
+        synchronized (gc.getGameState()) {
+            if (gc.getGameState().getDeckSize() == cardsInDeck)
+                gc.getGameState().pass(gc.getUserName());
         }
     }
 
     @Override
-    public void pass(int cardsInDeck, String id) {
-        //TODO fix pass
-        GameState gameState = getGameState(id);
-        synchronized (gameState) {
-            String user = (String) getThreadLocalRequest().getSession().getAttribute(USER_NAME);
-            gameState.AddNotAbleToPlay(user, cardsInDeck);
-            gameState.pass(user);
-            gameState.setInactivityTime(-INACTIVITY_TIME);
-        }
-    }
-
-    @Override
-    public boolean checkSet(Card[] set, String id) {
-        GameState gameState = getGameState(id);
+    public boolean checkSet(Card[] cards, String gameRoom) {
+        GameConnection gc = getUserGame(gameRoom);
+        if (gc == null)
+            return false;
         boolean isSet;
-        synchronized (gameState) {
-            String player = (String) getThreadLocalRequest().getSession().getAttribute(USER_NAME);
-            isSet = gameState.checkSet(set, player);
-            gameState.setInactivityTime(-INACTIVITY_TIME);
+        synchronized (gc.getGameState()) {
+            isSet = gc.getGameState().checkSet(cards, gc.getUserName());
         }
         return isSet;
     }
 
-    public boolean isPassed(String id) {
-        GameState gameState = getGameState(id);
-        return gameState.isPassed((String) getThreadLocalRequest().getSession().getAttribute(USER_NAME));
-    }
+    @Override
+    public void exit(String gameRoom) {
+        GameConnection gc = null;
 
-    /**
-     * Метод обнуляет таймер.
-     */
-    private void reloadTimer() {
-        timer.cancel();
-        timer = new Timer();
-        t = new StartTimer();
-    }
-
-    /**
-     * Класс, переодически обновляющий игровое время каждые PERIOD_MS миллисекунд.
-     * Если время равняется 0 миллисекунд, начинает игру.
-     */
-    private class StartTimer extends TimerTask {
-        /**
-         * Метод, осуществляющий обновление времени.
-         */
-        @Override
-        public void run() {
-            for (Map.Entry<String, GameState> pair :
-                    ((HashMap<String, GameState>) getServletContext().getAttribute(GAME_STATE)).entrySet()) {
-                GameState gameState = getGameState(pair.getKey());
-                if (gameState.getPlayers().size() != 0)
-                    synchronized (gameState) {
-                        gameState.tick();
-                        if (gameState.getTime() == 0) startGame(pair.getKey());
-                        if (gameState.getInactivityTime() == 0) newGameState(pair.getKey());
-
-                    }
+        GameState gameState = getGameState(gameRoom);
+        Map<GameState, GameConnection> connections = (Map<GameState, GameConnection>) getThreadLocalRequest().getSession().getAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS);
+        if (connections != null)
+        gc = connections.get(gameState);
+        if (gc != null) {
+            if (gameState.getGameId().equals(gc.getObservedGameId())) {
+                gc.setObservedGameId(null);
+                return;
+            }
+            if (!gameState.getGameId().equals(gc.getGameId()))
+                return;
+            synchronized (gc.getGameState()) {
+                gc.getGameState().exitPlayer(gc.getUserName());
             }
         }
     }
 
+    @Override
+    public void observe(String gameRoom) {
+        GameState gameState = getGameState(gameRoom);
 
+        Map<GameState, GameConnection> connections = (Map<GameState, GameConnection>) getThreadLocalRequest().getSession().getAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS);
+        if (connections == null) {
+            connections = new HashMap<>();
+            getThreadLocalRequest().getSession().setAttribute(SESSION_CONTEXT_GAMES_CONNECTIONS, connections);
+        }
+        GameConnection gc = connections.get(gameState);
+        if (gc == null) {
+            gc = new GameConnection(gameState, "");
+            connections.put(gameState, gc);
+        }
+        if (gameState.getGameId().equals(gc.getObservedGameId()))
+            return;
+        synchronized (gc.getGameState()) {
+            gc.setObservedGameId(gameState.getGameId());
+        }
+    }
 
+    /**
+     * Таймер, каждые TICK_MS миллисекунд обновляющий игровое время во всех играх.
+     */
+    private class Ticker extends TimerTask {
+        /**
+         * Обновление времени в играх.
+         */
+        @Override
+        public void run() {
+            for (GameState gameState :
+                    ((Map<String, GameState>) getServletContext().getAttribute(APP_CONTEXT_GAMES)).values()) {
+                synchronized (gameState) {
+                    gameState.tick(TICK_MS);
+                }
+            }
+        }
+    }
 }
